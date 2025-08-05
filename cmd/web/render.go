@@ -52,16 +52,20 @@ func (app *application) renderTemplate(
 			app.errorLog.Println(err)
 			return err
 		}
-
-		if td == nil {
-			td = &templateData{}
-		}
-
-		td = app.addDefaultData(td, r)
-		err = t.Execute(w, td)
-
-		return nil
 	}
+
+	if td == nil {
+		td = &templateData{}
+	}
+
+	td = app.addDefaultData(td, r)
+	err = t.Execute(w, td)
+	if err != nil {
+		app.errorLog.Println(err)
+		return err
+	}
+
+	return nil
 }
 
 func (app *application) parseTemplate(
