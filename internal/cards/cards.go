@@ -1,4 +1,4 @@
-package card
+package cards
 
 import (
 	"github.com/stripe/stripe-go/v72"
@@ -6,24 +6,24 @@ import (
 )
 
 type Card struct {
-	Secret string
-	Key string
+	Secret   string
+	Key      string
 	Currency string
 }
 
 type Transaction struct {
-	TransactionID string
-	Amount int
-	Currency string
-	LastFour string
+	TransactionID  string
+	Amount         int
+	Currency       string
+	LastFour       string
 	BankReturnCode string
 }
 
-func (c *Card) CreatePaymentIntent(currency string , amount int) (*stripe.PaymentIntent, string, error) {
+func (c *Card) CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error) {
 	stripe.Key = c.Secret
 
 	params := &stripe.PaymentIntentParams{
-		Amount: stripe.Int64(int64(amount)),
+		Amount:   stripe.Int64(int64(amount)),
 		Currency: stripe.String(currency),
 	}
 
@@ -31,7 +31,7 @@ func (c *Card) CreatePaymentIntent(currency string , amount int) (*stripe.Paymen
 	if err != nil {
 		msg := ""
 		if stripeErr, ok := err.(*stripe.Error); ok {
-			msg = cardErrorMessage(stripeErr.Code) 
+			msg = cardErrorMessage(stripeErr.Code)
 		}
 		return nil, msg, err
 	}
@@ -39,7 +39,7 @@ func (c *Card) CreatePaymentIntent(currency string , amount int) (*stripe.Paymen
 }
 
 func (c *Card) Charge(currency string, amount int) (*stripe.PaymentIntent, string, error) {
-	return c.CreatePaymentIntent(currency, amount) 
+	return c.CreatePaymentIntent(currency, amount)
 }
 
 func cardErrorMessage(code stripe.ErrorCode) string {
@@ -64,5 +64,5 @@ func cardErrorMessage(code stripe.ErrorCode) string {
 	default:
 		msg = "Your card was declined"
 	}
-	return msg	
+	return msg
 }
