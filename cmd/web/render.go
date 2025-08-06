@@ -85,11 +85,11 @@ func (app *application) parseTemplate(
 	if len(partials) > 0 {
 		t, err = template.New(fmt.Sprintf("%s.page.tmpl", page)).
 			Funcs(functions).
-			ParseFS(templateFS, "templates/base.layout.tmpl", strings.Join(partials, ","))
+			ParseFS(templateFS, "templates/base.layout.tmpl", strings.Join(partials, ","), templateToRender)
 	} else {
 		t, err = template.New(fmt.Sprintf("%s.page.tmpl", page)).
 			Funcs(functions).
-			ParseFS(templateFS, "templates/base.layout.tmpl")
+			ParseFS(templateFS, "templates/base.layout.tmpl", templateToRender)
 	}
 
 	if err != nil {
