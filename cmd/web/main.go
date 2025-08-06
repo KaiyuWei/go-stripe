@@ -67,6 +67,14 @@ func main() {
 	)
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "URL to api")
 
+	//Note: maybe not needed for frontend? Lets check later
+	flag.StringVar(
+		&cfg.db.dsn,
+		"dsn",
+		"root@tcp(localhost:3306)/widgets?parseTime=true&tls=false",
+		"Database connection string",
+	)
+
 	flag.Parse()
 
 	cfg.stripe.key = os.Getenv("STRIPE_KEY")
