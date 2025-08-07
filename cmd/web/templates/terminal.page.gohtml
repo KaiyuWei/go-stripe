@@ -98,6 +98,25 @@
     processing.classList.remove("d-none");
   }
 
+  function hidePayButton() {
+    payButton.classList.remove("d-none");
+    processing.classList.add("d-none");
+  }
+
+  function showCardError(msg) {
+    cardMessages.classList.add("alert-danger");
+    cardMessages.classList.remove("alert-success");
+    cardMessages.classList.remove("d-none");
+    cardMessages.innerText = msg;
+  }
+
+  function showCardSuccess() {
+    cardMessages.classList.add("alert-success");
+    cardMessages.classList.remove("alert-danger");
+    cardMessages.classList.remove("d-none");
+    cardMessages.innerText = "Payment successful!";
+  }
+
   function val() {
     let form = document.getElementById("charge_form");
     if (form.checkValidity() === false) {
@@ -115,7 +134,7 @@
 
     let payload = {
       amount: amountToCharge,
-      currency: "euro",
+      currency: "eur",
     };
 
     const requestOptions = {
@@ -133,9 +152,39 @@
         let data;
         try {
           data = JSON.parse(response);
-          console.log(data);
+          stripe
+            .confirmCardPayment(data.client_secret, {
+              payment_method: {
+                card: card,
+                billing_details: {
+                  name: document.getElementById("cardholder-name").value,
+                },
+              },
+            })
+            .then(function (result) {
+              if (result.error) {
+                showCardError(result.error.message);
+                showPayButton();
+              } else if (
+                result.paymentIntent &&
+                result.paymentIntent.status === "succeeded"
+              ) {
+                document.getElementById("payment_method").value =
+                  result.paymentIntent.payment_method;
+                document.getElementById("payment_intent").value =
+                  result.paymentIntent.id;
+                document.getElementById("payment_amount").value =
+                  result.paymentIntent.amount;
+                document.getElementById("payment_currency").value =
+                  result.paymentIntent.currency;
+                processing.classList.add("d-none");
+                showCardSuccess();
+              }
+            });
         } catch (e) {
           console.log(e);
+          showCardError("Invalid response from payment gateway!");
+          showPayButton();
         }
       });
   }
