@@ -45,7 +45,7 @@
       type="email"
       class="form-control"
       id="cardholder-email"
-      name="cardholder_email"
+      name="email"
       required=""
       autocomplete="cardholder-email-new"
     />
@@ -179,6 +179,7 @@
                   result.paymentIntent.currency;
                 processing.classList.add("d-none");
                 showCardSuccess();
+                document.getElementById("charge_form").submit();
               }
             });
         } catch (e) {
