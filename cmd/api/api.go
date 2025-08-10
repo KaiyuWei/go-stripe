@@ -1,12 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
@@ -50,29 +55,38 @@ func (app *application) serve() error {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
+
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
 	flag.StringVar(
 		&cfg.env,
 		"env",
 		"development",
 		"Application environment {development|production|maintenance}",
 	)
-	flag.StringVar(
-		&cfg.db.dsn,
-		"dsn",
-		"root@tcp(localhost:3306)/widgets?parseTime=true&tls=false",
-		"Database connection string",
-	)
 
 	flag.Parse()
 
 	cfg.stripe.key = os.Getenv("STRIPE_KEY")
 	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	cfg.db.dsn = os.Getenv("DSN")
+	cfg.port, err = strconv.Atoi(os.Getenv("API_PORT"))
+	if err != nil {
+		log.Fatal("Invalid API port:", err)
+	}
 
 	infoLog := log.New(os.Stdout, "[INFO]\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "[ERROR]\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	conn, err := sql.Open("mysql", cfg.db.dsn)
+	if err != nil {
+		errorLog.Fatal("Error connecting to the database:", err)
+	}
+	defer conn.Close()
 
 	app := &application{
 		config:   cfg,
@@ -81,7 +95,9 @@ func main() {
 		version:  version,
 	}
 
-	err := app.serve()
+	app.infoLog.Printf("Starting application version %+v", app.config)
+
+	err = app.serve()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,14 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
 
@@ -58,37 +61,39 @@ func (app *application) serve() error {
 }
 
 func main() {
-	loadEnvErr := godotenv.Load()
-	if loadEnvErr != nil {
-		log.Fatal("Error loading .env file", loadEnvErr)
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
 	}
 
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
 	flag.StringVar(
 		&cfg.env,
 		"env",
 		"development",
 		"Application environment {development|production}",
 	)
-	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "URL to api")
-
-	//Note: maybe not needed for frontend? Lets check later
-	flag.StringVar(
-		&cfg.db.dsn,
-		"dsn",
-		"root@tcp(localhost:3306)/widgets?parseTime=true&tls=false",
-		"Database connection string",
-	)
 
 	flag.Parse()
 
 	cfg.stripe.key = os.Getenv("STRIPE_KEY")
 	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	cfg.db.dsn = os.Getenv("DSN")
+	cfg.api = os.Getenv("API")
+	cfg.port, err = strconv.Atoi(os.Getenv("WEBAPP_PORT"))
+	if err != nil {
+		log.Fatal("Invalid app port:", err)
+	}
 
 	infoLog := log.New(os.Stdout, "[INFO]\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "[ERROR]\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	conn, err := sql.Open("mysql", cfg.db.dsn)
+	if err != nil {
+		errorLog.Fatal("Error connecting to the database:", err)
+	}
+	defer conn.Close()
 
 	tc := make(map[string]*template.Template)
 
@@ -100,7 +105,7 @@ func main() {
 		version:       version,
 	}
 
-	err := app.serve()
+	err = app.serve()
 	if err != nil {
 		app.errorLog.Println(err)
 		log.Fatal(err)
