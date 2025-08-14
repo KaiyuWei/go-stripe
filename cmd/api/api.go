@@ -95,8 +95,6 @@ func main() {
 		version:  version,
 	}
 
-	app.infoLog.Printf("Starting application version %+v", app.config)
-
 	err = app.serve()
 	if err != nil {
 		log.Fatal(err)
